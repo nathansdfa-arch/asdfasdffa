@@ -37,6 +37,8 @@ class BrokerConnector(ABC):
     name = "base"
     # Guard rule 7: can this broker hold a real stop loss order attached to a position?
     supports_broker_stops = True
+    # Guard rule 8 needs every fill reported as it happens. Only the paper broker does so far.
+    reports_fills = False
 
     def __init__(self, check_stamp: StampChecker | None = None):
         # Without the guard's checker, every stamp is invalid and every order is refused.

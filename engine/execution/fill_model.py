@@ -61,3 +61,23 @@ def fill_on_candle(order_type: OrderType, side: Side, order_price: float | None,
         if side is Side.SELL and candle.low <= order_price:
             return market_fill_price(side, min(order_price, candle.open), market)
     return None
+
+
+def apply_fill(quantity: float, average_price: float, signed_quantity: float, price: float, point_value: float) -> tuple[float, float, float]:
+    """Update a position with a fill. Returns (new quantity, new average price, realized profit or loss).
+
+    quantity is positive for long and negative for short; signed_quantity is
+    positive for a buy and negative for a sell. Used by the paper broker and
+    the backtester alike.
+    """
+    if quantity == 0 or (quantity > 0) == (signed_quantity > 0):
+        total = quantity + signed_quantity
+        return total, (average_price * quantity + price * signed_quantity) / total, 0.0
+    closing = min(abs(signed_quantity), abs(quantity))
+    realized = (price - average_price) * closing * (1 if quantity > 0 else -1) * point_value
+    remaining = quantity + signed_quantity
+    if abs(remaining) < 1e-12:
+        return 0.0, 0.0, realized
+    if (remaining > 0) == (quantity > 0):
+        return remaining, average_price, realized
+    return remaining, price, realized       # flipped: the rest opens at this price

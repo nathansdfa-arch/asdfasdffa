@@ -317,6 +317,8 @@ class RiskGuard:
             request.reduce_only = True
             return Decision(True, "Rule 2: always let the owner out", "This order reduces risk, so it is always allowed.", reduces_risk=True)
 
+        if not broker.connected:
+            return Decision(False, "Rule 3: fail closed", f"The {broker.name} connection is down or not set up ({getattr(broker, 'status', 'not connected')}), so new orders are blocked.")
         state = self.state(account)
         numbers = self.numbers(account)
 
@@ -664,6 +666,12 @@ class RiskGuard:
             return
         state = self.state(account)
         reported = broker.snapshot(account.id).balance
+        if not broker.reports_fills:
+            # This connector doesn't stream fills yet, so our own running balance can't be
+            # kept; follow the broker's number (see NEEDS_NATHAN.md: needed before going live).
+            state.expected_balance = reported
+            self._save_state(account.id)
+            return
         if state.expected_balance is None:
             state.expected_balance = reported
         gap = abs(reported - state.expected_balance)

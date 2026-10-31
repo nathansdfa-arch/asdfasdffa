@@ -57,6 +57,7 @@ class PaperBook:
 class PaperBroker(BrokerConnector):
     name = "paper"
     supports_broker_stops = True
+    reports_fills = True
 
     def __init__(
         self,
@@ -243,25 +244,9 @@ class PaperBroker(BrokerConnector):
 
         signed = quantity * order.side.sign
         fee = market.fee(quantity, price)
-        realized = 0.0
-        if position.quantity == 0 or (position.quantity > 0) == (signed > 0):
-            # Opening or adding: new average price.
-            total = position.quantity + signed
-            position.average_price = (position.average_price * position.quantity + price * signed) / total
-            position.quantity = total
-        else:
-            # Reducing, closing or flipping.
-            closing = min(abs(signed), abs(position.quantity))
-            realized = (price - position.average_price) * closing * (1 if position.quantity > 0 else -1) * market.point_value
-            remaining = position.quantity + signed
-            if abs(remaining) < 1e-12:
-                position.quantity = 0.0
-                position.average_price = 0.0
-            elif (remaining > 0) == (position.quantity > 0):
-                position.quantity = remaining
-            else:
-                position.quantity = remaining      # flipped: the rest opens at this price
-                position.average_price = price
+        position.quantity, position.average_price, realized = fill_model.apply_fill(
+            position.quantity, position.average_price, signed, price, market.point_value
+        )
         position.realized_pnl += realized
         book.balance += realized - fee
 

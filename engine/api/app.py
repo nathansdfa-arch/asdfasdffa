@@ -1,91 +1,114 @@
 """The engine's local API.
 
-Screens talk to the engine by sending small web requests to addresses such
-as /api/health or /api/settings. The engine also serves the screens
-themselves (the files in the ui folder) at the main address.
+Screens talk to the engine by sending small web requests (for example
+GET /api/state) and keep a WebSocket (/ws) open for live updates. The
+engine also serves the screens themselves (the ui folder).
 
-Security (bible section 11): until remote access is deliberately switched on
-in phase 12, the engine only accepts connections from this same computer.
-Two layers enforce that:
-  1. the server only listens on 127.0.0.1, the address that is reachable
-     from this computer and nowhere else (see engine/__main__.py)
-  2. every request is checked here, and anything not from this computer is refused
+Security (bible sections 4 and 11):
+  - Connections from this computer need no login.
+  - Connections from anywhere else are refused unless remote access has been
+    switched on (phase 12), and then need a login with a password and a
+    two-factor code, over an encrypted connection.
+  - Requests whose Host header isn't this computer are refused, which stops
+    a web page in your browser from secretly talking to the engine.
 """
 
 import logging
-from datetime import datetime, timezone
+from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
 
-from engine import __version__, paths
-from engine.storage import database
-from engine.storage.settings import SETTINGS, SettingError, SettingsStore
+from engine import paths
+from engine.api import routes_market, routes_scripts, routes_system, routes_trading
+from engine.api.live import Client, LiveHub
+from engine.runtime import Engine
+from engine.security.auth import Auth
 
 log = logging.getLogger(__name__)
 
-# Addresses that mean "this same computer".
 LOCAL_ADDRESSES = {"127.0.0.1", "::1", "localhost"}
+SESSION_COOKIE = "trading_session"
+# Pages and files a remote device may load before logging in.
+PUBLIC_PATHS = ("/login.html", "/api/auth/login", "/api/auth/status", "/css/", "/vendor/", "/favicon")
 
 
-class SettingValue(BaseModel):
-    value: Any
+def create_app(db_path: Path | None = None, allow_any_client: bool = False, start_engine: bool = True, engine: Engine | None = None) -> FastAPI:
+    """Build the API. Tests pass their own database file and may skip starting live feeds."""
+    engine = engine or Engine(db_path or paths.database_path())
+    auth = Auth(engine.db_path)
+    hub = LiveHub(engine.bus)
 
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        import asyncio
+        hub.loop = asyncio.get_running_loop()
+        if start_engine:
+            await engine.start()
+        yield
+        if start_engine:
+            await engine.stop()
 
-def create_app(db_path: Path | None = None, allow_any_client: bool = False) -> FastAPI:
-    """Build the API. Tests pass their own database file and allow their test client."""
-    db_path = db_path or paths.database_path()
-    schema_version = database.initialize(db_path)
-    settings = SettingsStore(db_path)
-    started_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    app = FastAPI(title="Trading App Engine", lifespan=lifespan)
+    app.state.engine = engine
+    app.state.auth = auth
+    app.state.hub = hub
 
-    app = FastAPI(title="Trading App Engine", version=__version__)
+    def is_local(client: str | None) -> bool:
+        return allow_any_client or client in LOCAL_ADDRESSES
 
     @app.middleware("http")
-    async def only_this_computer(request: Request, call_next):
+    async def gatekeeper(request: Request, call_next):
         client = request.client.host if request.client else None
-        if not allow_any_client and client not in LOCAL_ADDRESSES:
+        if is_local(client):
+            host = (request.headers.get("host") or "").split(":")[0]
+            if not allow_any_client and host not in LOCAL_ADDRESSES and host != "testserver":
+                return JSONResponse(status_code=403, content={"error": "Refused: unexpected host name."})
+            return await call_next(request)
+        status = auth.status()
+        if not status["remote_enabled"]:
             log.warning("Refused a connection from %s: remote access is switched off", client)
-            return JSONResponse(
-                status_code=403,
-                content={"error": "Remote access is switched off. Connect from the computer running the engine."},
-            )
-        return await call_next(request)
+            return JSONResponse(status_code=403, content={"error": "Remote access is switched off. Connect from the computer running the engine."})
+        path = request.url.path
+        if path.startswith(PUBLIC_PATHS) or auth.session_ok(request.cookies.get(SESSION_COOKIE)):
+            return await call_next(request)
+        if path.startswith("/api/"):
+            return JSONResponse(status_code=401, content={"error": "Please log in."})
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse("/login.html")
 
-    @app.get("/api/health")
-    def health() -> dict:
-        """Lets a screen check that the engine is running and see basic facts about it."""
-        return {
-            "status": "ok",
-            "version": __version__,
-            "started_at": started_at,
-            "schema_version": schema_version,
-            "data_folder": str(db_path.parent),
-        }
+    for module in (routes_system, routes_market, routes_trading, routes_scripts):
+        app.include_router(module.router)
 
-    @app.get("/api/settings")
-    def get_settings() -> dict:
-        """All settings with their labels and current values."""
-        values = settings.get_all()
-        return {
-            key: {"label": spec.label, "value": values[key], "default": spec.default}
-            for key, spec in SETTINGS.items()
-        }
-
-    @app.put("/api/settings/{key}")
-    def put_setting(key: str, body: SettingValue):
-        """Save one setting. A bad value gets a plain English reason back."""
+    @app.websocket("/ws")
+    async def live(websocket: WebSocket):
+        client_host = websocket.client.host if websocket.client else None
+        if not is_local(client_host):
+            if not auth.status()["remote_enabled"] or not auth.session_ok(websocket.cookies.get(SESSION_COOKIE)):
+                await websocket.close(code=4401)
+                return
+        await websocket.accept()
+        client = Client(websocket)
+        hub.clients.add(client)
+        import asyncio
+        pump = asyncio.create_task(client.pump())
         try:
-            settings.set(key, body.value)
-        except SettingError as problem:
-            return JSONResponse(status_code=400, content={"error": str(problem)})
-        return {"key": key, "value": body.value}
+            while True:
+                message = await websocket.receive_json()
+                if message.get("watch"):
+                    for item in message["watch"]:
+                        try:
+                            engine.data.want_live(item["symbol"], item.get("timeframe", "1m"))
+                        except (KeyError, ValueError):
+                            pass
+        except WebSocketDisconnect:
+            pass
+        finally:
+            pump.cancel()
+            hub.clients.discard(client)
 
     # Serve the screens. This goes last so the /api addresses above take priority.
     app.mount("/", StaticFiles(directory=paths.ui_dir(), html=True), name="ui")
-
     return app

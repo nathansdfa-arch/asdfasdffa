@@ -141,6 +141,47 @@ MIGRATIONS = [
         );
         """,
     ),
+    (
+        5,
+        "Create scripts and automation runs",
+        """
+        -- The owner's Python scripts: indicators, strategies and automations.
+        CREATE TABLE scripts (
+            id         TEXT PRIMARY KEY,
+            name       TEXT NOT NULL,
+            kind       TEXT NOT NULL,     -- indicator, strategy, automation, unknown
+            code       TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+
+        -- Strategies and automations set up to run, and on which account and symbol.
+        CREATE TABLE runs (
+            id         TEXT PRIMARY KEY,
+            config     TEXT NOT NULL,     -- JSON
+            updated_at TEXT NOT NULL
+        );
+        """,
+    ),
+    (
+        6,
+        "Create login and remote access tables",
+        """
+        -- The owner's login for remote access (browser or phone on another device).
+        -- The password is stored only as a salted scrypt hash; the two-factor secret
+        -- is what the authenticator app also knows.
+        CREATE TABLE auth (
+            key   TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        );
+
+        CREATE TABLE sessions (
+            token_hash TEXT PRIMARY KEY,
+            created_at REAL NOT NULL,
+            expires_at REAL NOT NULL,
+            client     TEXT NOT NULL
+        );
+        """,
+    ),
 ]
 
 
