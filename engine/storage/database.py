@@ -29,6 +29,118 @@ MIGRATIONS = [
         );
         """,
     ),
+    (
+        2,
+        "Create the candle cache",
+        """
+        CREATE TABLE candles (
+            symbol    TEXT NOT NULL,     -- 'BYBIT:BTCUSDT'
+            timeframe TEXT NOT NULL,     -- '1m', '1h', ...
+            time      INTEGER NOT NULL,  -- candle open time, unix seconds UTC
+            open REAL NOT NULL, high REAL NOT NULL, low REAL NOT NULL, close REAL NOT NULL,
+            volume REAL NOT NULL,
+            PRIMARY KEY (symbol, timeframe, time)
+        ) WITHOUT ROWID;
+
+        -- Which stretch of time has already been fetched, so it is not fetched again.
+        CREATE TABLE candle_coverage (
+            symbol    TEXT NOT NULL,
+            timeframe TEXT NOT NULL,
+            start     INTEGER NOT NULL,
+            end       INTEGER NOT NULL,
+            PRIMARY KEY (symbol, timeframe)
+        );
+        """,
+    ),
+    (
+        3,
+        "Create workspaces and chart drawings",
+        """
+        -- A workspace is a saved screen layout: the chart grid, each chart's
+        -- symbol, timeframe, indicators and style, and the panels.
+        CREATE TABLE workspaces (
+            name       TEXT PRIMARY KEY,
+            layout     TEXT NOT NULL,     -- JSON
+            updated_at TEXT NOT NULL
+        );
+
+        -- Lines, boxes, Fibonacci levels and notes drawn on charts, kept per symbol.
+        CREATE TABLE drawings (
+            id         TEXT PRIMARY KEY,
+            symbol     TEXT NOT NULL,
+            drawing    TEXT NOT NULL,     -- JSON: kind, points, color, text
+            updated_at TEXT NOT NULL
+        );
+        CREATE INDEX drawings_by_symbol ON drawings (symbol);
+        """,
+    ),
+    (
+        4,
+        "Create accounts, trades and the risk guard log",
+        """
+        -- Trading accounts (paper or broker), with their risk rules as JSON.
+        CREATE TABLE accounts (
+            id         TEXT PRIMARY KEY,
+            config     TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        );
+
+        -- Running state per account: trading day, drawdown high-water mark, halts.
+        CREATE TABLE account_state (
+            account_id TEXT PRIMARY KEY,
+            state      TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+
+        -- The paper broker's books: balance, positions and working orders per account.
+        CREATE TABLE paper_books (
+            account_id TEXT PRIMARY KEY,
+            book       TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+
+        -- Every fill (trade execution), on every account.
+        CREATE TABLE fills (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id  TEXT NOT NULL,
+            order_id    TEXT NOT NULL,
+            symbol      TEXT NOT NULL,
+            side        TEXT NOT NULL,
+            quantity    REAL NOT NULL,
+            price       REAL NOT NULL,
+            fee         REAL NOT NULL,
+            realized    REAL NOT NULL,   -- profit or loss this fill closed, before fees
+            role        TEXT NOT NULL,   -- entry, stop_loss, take_profit, close
+            source      TEXT NOT NULL,
+            time        REAL NOT NULL    -- unix seconds UTC
+        );
+        CREATE INDEX fills_by_account ON fills (account_id, time);
+
+        -- Every risk guard decision: what was asked, the rule that decided, the numbers, the result.
+        CREATE TABLE guard_log (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            time       REAL NOT NULL,
+            account_id TEXT,
+            symbol     TEXT,
+            action     TEXT NOT NULL,    -- place, cancel, modify_stop, kill_switch, ...
+            approved   INTEGER NOT NULL,
+            rule       TEXT NOT NULL,
+            reason     TEXT NOT NULL,
+            numbers    TEXT NOT NULL,    -- JSON
+            source     TEXT NOT NULL
+        );
+        CREATE INDEX guard_log_by_time ON guard_log (time);
+
+        -- Alerts shown to the owner (warnings, blocks, disconnects, kill switch).
+        CREATE TABLE alerts (
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            time     REAL NOT NULL,
+            level    TEXT NOT NULL,      -- info, warning, danger
+            message  TEXT NOT NULL,
+            account_id TEXT
+        );
+        """,
+    ),
 ]
 
 

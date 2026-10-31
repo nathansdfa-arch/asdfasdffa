@@ -53,6 +53,38 @@ def _check_bool(value: Any) -> str | None:
     return None
 
 
+def _check_color(value: Any) -> str | None:
+    """A color written like #a1b2c3, or empty text for "use the theme's color"."""
+    if value == "":
+        return None
+    if isinstance(value, str) and len(value) == 7 and value.startswith("#"):
+        try:
+            int(value[1:], 16)
+            return None
+        except ValueError:
+            pass
+    return "Colors are written like #a1b2c3."
+
+
+def _choice(*options: str) -> Callable[[Any], str | None]:
+    def check(value: Any) -> str | None:
+        if value not in options:
+            return f"Choose one of: {', '.join(options)}."
+        return None
+    return check
+
+
+def _number_between(low: float, high: float) -> Callable[[Any], str | None]:
+    def check(value: Any) -> str | None:
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not low <= value <= high:
+            return f"Enter a number from {low:g} to {high:g}."
+        return None
+    return check
+
+
+THEME_NAMES = ("lilac_nocturne", "rose_quartz", "champagne_graphite", "sea_glass", "ice_opal")
+
+
 SETTINGS: dict[str, SettingSpec] = {
     # Times are stored in UTC and shown in this time zone (bible section 4).
     "display_timezone": SettingSpec("Display time zone", "UTC", _check_timezone),
@@ -60,6 +92,21 @@ SETTINGS: dict[str, SettingSpec] = {
     "glow_strength": SettingSpec("Glow strength", 50, _check_glow),
     # Turns off non-essential animation (bible section 6A).
     "reduce_motion": SettingSpec("Reduce motion", False, _check_bool),
+    # Look and feel (bible section 6A). The presets are proposals awaiting the owner's approval.
+    "theme": SettingSpec("Theme", "lilac_nocturne", _choice(*THEME_NAMES)),
+    "accent_color": SettingSpec("Accent color (empty = theme's own)", "", _check_color),
+    "effects_enabled": SettingSpec("Visual effects", True, _check_bool),
+    "effect_intensity": SettingSpec("Effect intensity", 50, _check_glow),
+    "chart_background": SettingSpec("Chart background", "gradient", _choice("solid", "gradient", "animated", "plain")),
+    "candle_up_color": SettingSpec("Up candle color (empty = theme's own)", "", _check_color),
+    "candle_down_color": SettingSpec("Down candle color (empty = theme's own)", "", _check_color),
+    "candle_hollow": SettingSpec("Hollow up candles", False, _check_bool),
+    "candle_glow": SettingSpec("Glow on candles", False, _check_bool),
+    "watchlist_side": SettingSpec("Watchlist side", "left", _choice("left", "right")),
+    # Feed health (bible section 5): seconds without a price before the yellow banner.
+    "stale_seconds": SettingSpec("Seconds before a quiet feed counts as stale", 5, _number_between(2, 120)),
+    # Sounds for the 70% warning, a block and a disconnect (open question for the owner; off until decided).
+    "alert_sounds": SettingSpec("Alert sounds", False, _check_bool),
 }
 
 
