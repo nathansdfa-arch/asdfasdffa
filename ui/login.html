@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trading App sign in</title>
+  <link rel="stylesheet" href="css/app.css">
+  <style>
+    body { display: grid; place-items: center; min-height: 100vh; background: var(--bg); }
+    .login { width: min(360px, calc(100vw - 32px)); background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px; display: grid; gap: 12px; }
+    .login input { width: 100%; }
+  </style>
+</head>
+<body>
+  <form class="login" id="login">
+    <div class="brand"><span class="dot"></span><strong>Trading App</strong></div>
+    <p class="muted">Remote sign in. You need your password and the 6-digit code from your authenticator app.</p>
+    <label class="field">Password<input type="password" id="password" autocomplete="current-password" required></label>
+    <label class="field">Two-factor code<input id="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" required></label>
+    <button class="btn primary" type="submit">Sign in</button>
+    <div id="message" class="muted"></div>
+  </form>
+  <script>
+    // Plain script: the sign-in page must work before anything else is allowed to load.
+    document.getElementById("login").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = document.getElementById("message");
+      message.textContent = "Checking…";
+      const reply = await fetch("/api/auth/login", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: document.getElementById("password").value, code: document.getElementById("code").value }),
+      });
+      const body = await reply.json().catch(() => ({}));
+      if (reply.ok) location.href = "/";
+      else message.textContent = body.error || "Sign in failed.";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "_readme": "The 'Set up [firm] account' buttons in the Accounts panel. Edit links here (for example to a checkout or referral link) without touching code. The app never handles payment.",
+  "firms": [
+    {"name": "Tradeify", "url": "https://tradeify.co", "market": "futures", "automation": "automation unconfirmed"},
+    {"name": "Lucid Trading", "url": "https://lucidtrading.com", "market": "futures", "automation": "automation unconfirmed"},
+    {"name": "HyroTrader", "url": "https://www.hyrotrader.com", "market": "crypto", "automation": "API bots allowed"},
+    {"name": "Breakout", "url": "https://www.breakoutprop.com", "market": "crypto", "automation": "automation unconfirmed"}
+  ]
+}

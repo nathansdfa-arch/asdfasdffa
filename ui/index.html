@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Trading App</title>
+  <link rel="stylesheet" href="vendor/codemirror/codemirror.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="dot"></span><span>Trading App</span></div>
+    <div class="workspace-picker row">
+      <select id="workspace-select" title="Workspace (saved layout)"></select>
+      <button class="btn small" id="workspace-save-as" title="Save this layout under a new name">Save as…</button>
+    </div>
+    <div class="layout-buttons" id="layout-buttons" title="Chart grid layout"></div>
+    <div class="spacer"></div>
+    <div class="strip" id="strip"></div>
+    <button class="kill" id="kill-switch" title="Stops every automation, cancels every order and closes every position. No confirmation.">KILL SWITCH</button>
+  </header>
+  <div id="banners"></div>
+
+  <main class="workspace" id="workspace">
+    <aside class="watchlist" id="watchlist"></aside>
+    <section class="grid-area"><div class="grid" id="grid"></div></section>
+    <aside class="dock" id="dock">
+      <nav class="dock-tabs" id="dock-tabs"></nav>
+      <div class="dock-body" id="dock-body"></div>
+    </aside>
+  </main>
+
+  <nav class="phone-nav" id="phone-nav">
+    <button class="btn" data-phone="watchlist">Symbols</button>
+    <button class="btn" data-phone="trade">Trade</button>
+    <button class="btn" data-phone="accounts">Account</button>
+    <button class="btn" data-phone="log">Alerts</button>
+  </nav>
+
+  <div id="toasts"></div>
+
+  <script src="vendor/lightweight-charts/lightweight-charts.standalone.production.js"></script>
+  <script src="vendor/codemirror/codemirror.js"></script>
+  <script src="vendor/codemirror/python.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

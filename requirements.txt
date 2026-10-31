@@ -1,0 +1,11 @@
+# Packages the app needs. All are free and open source with permissive licenses.
+fastapi==0.162.0      # the engine's local API (MIT license)
+uvicorn==0.54.0       # runs the API server (BSD license)
+pywebview==6.2.1      # the desktop window, using Windows' built-in Edge WebView2 (BSD license)
+tzdata==2026.6        # time zone data; Windows does not ship it for Python (Apache license)
+numpy==2.5.4          # fast maths for indicators and backtests (BSD license)
+pandas==3.1.0         # data analysis library scripts may use (BSD license)
+websockets==17.4      # live price streams from Bybit (BSD license)
+keyring==25.7.0       # stores passwords and API keys in Windows Credential Manager (MIT license)
+cryptography==50.0.2  # HTTPS certificate for remote access (Apache/BSD license)
+MetaTrader5==5.0.6231; sys_platform == "win32"   # official MetaTrader 5 link, Windows only (MIT license)
