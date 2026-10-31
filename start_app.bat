@@ -10,6 +10,14 @@ if not exist ".venv\Scripts\python.exe" (
     py -3 -m venv .venv || goto :no_python
     ".venv\Scripts\python.exe" -m pip install --upgrade pip
     ".venv\Scripts\python.exe" -m pip install -r requirements.txt || goto :failed
+    rem MetaTrader 5 support is optional: MetaQuotes doesn't publish it for every
+    rem Python version, so a failure here must not stop the app from opening.
+    ".venv\Scripts\python.exe" -m pip install -r requirements-mt5.txt || (
+        echo.
+        echo Note: MetaTrader 5 support could not be installed for this Python version.
+        echo The app works fine without it. Only MetaTrader 5 accounts are unavailable.
+        echo.
+    )
 )
 
 ".venv\Scripts\python.exe" -m desktop.launcher %*

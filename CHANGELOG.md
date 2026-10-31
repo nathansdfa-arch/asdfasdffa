@@ -2,6 +2,10 @@
 
 Every change to the app, newest first, in plain language.
 
+## Unreleased
+
+- **Launcher fix.** MetaTrader 5 support is now a separate, optional install (`requirements-mt5.txt`). Before, `start_app.bat` failed on new Python versions (such as 3.15) that MetaQuotes has no package for yet. Now the app opens anyway and only MetaTrader 5 accounts show as unavailable.
+
 ## 0.2.0 (31 October 2026): the full first build (phases 2 to 14)
 
 Built overnight at the owner's request. See NEEDS_NATHAN.md for what needs a decision or a test.

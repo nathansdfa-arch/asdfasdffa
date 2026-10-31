@@ -1,0 +1,3 @@
+# Optional: the official MetaTrader 5 link, Windows only (MIT license).
+# Not available for every Python version. The app works without it.
+MetaTrader5==5.0.6231; sys_platform == "win32"
