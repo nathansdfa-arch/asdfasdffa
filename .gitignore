@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Never commit the owner's data, logs or secrets
+*.db
+*.db-wal
+*.db-shm
+*.log
+.env
