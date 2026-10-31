@@ -1,0 +1,5 @@
+# Packages the app needs. All are free and open source with permissive licenses.
+fastapi==0.162.0      # the engine's local API (MIT license)
+uvicorn==0.54.0       # runs the API server (BSD license)
+pywebview==6.2.1      # the desktop window, using Windows' built-in Edge WebView2 (BSD license)
+tzdata==2026.6        # time zone data; Windows does not ship it for Python (Apache license)

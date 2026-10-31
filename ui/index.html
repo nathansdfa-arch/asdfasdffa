@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trading App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Red banner shown whenever the engine stops answering. Uses a fixed safety color. -->
+  <div id="engine-banner" class="safety-banner" hidden>
+    Not connected to the engine. Trying again…
+  </div>
+
+  <main class="shell">
+    <header class="top">
+      <h1>Trading App</h1>
+      <span id="engine-status" class="status-pill">Connecting…</span>
+    </header>
+
+    <section class="panel">
+      <h2>Engine</h2>
+      <dl class="facts">
+        <dt>Version</dt><dd id="fact-version">–</dd>
+        <dt>Running since</dt><dd id="fact-started">–</dd>
+        <dt>Database version</dt><dd id="fact-schema">–</dd>
+        <dt>Data folder</dt><dd id="fact-folder">–</dd>
+      </dl>
+    </section>
+
+    <section class="panel">
+      <h2>Settings</h2>
+      <p class="hint">Changes save straight away and are still here after you close and reopen the app.</p>
+      <form id="settings-form" class="settings"></form>
+      <p id="settings-message" class="message" role="status"></p>
+    </section>
+
+    <p class="footnote">Phase 1 skeleton. Charts arrive in phase 2.</p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

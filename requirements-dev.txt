@@ -1,0 +1,4 @@
+# Extra packages used only for the automated tests.
+-r requirements.txt
+pytest==9.2.0         # runs the tests (MIT license)
+httpx==0.28.1         # lets the tests call the API (BSD license)
