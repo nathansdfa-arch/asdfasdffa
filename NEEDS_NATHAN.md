@@ -67,7 +67,7 @@ To switch it on:
 4. **Set an owner PIN** in the same Settings section. Without it, any program on your PC could press owner-only buttons such as switching an account to live. With it, those buttons ask for the PIN.
 5. Set Jarvis's limits there too: contracts per order (default 1), orders per day (default 20) and which paper accounts it may use.
 
-Still open: Jarvis can't decide trades on its own. Strategies decide; Jarvis runs them. Tell us if you want an AI-decides experiment on paper.
+**Autopilot (you chose this on 1 November):** Jarvis can also pick its own paper trades. It is off until you press **Switch autopilot on** in Settings, Jarvis, and set `trading_autopilot.enabled` to `true` in the Jarvis relay's `config.json` (see the relay README). Jarvis then checks the market every 15 minutes in market hours, trades only with a stop and a written reason, and every reason is in the Log. It obeys the same paper-only rule, limits and risk guard. Tell Jarvis which symbols to watch; it uses DEMO:ES if you don't. Review its trades with us after a week before trusting it with anything more.
 
 ## 9. Smaller decisions
 

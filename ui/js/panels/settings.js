@@ -71,7 +71,9 @@ export async function renderSettings(el) {
       <div class="stack">
         <div class="muted">Jarvis: ${jarvis.key_set ? (jarvis.enabled ? "on" : "off") : "no key yet"} · Orders today: ${jarvis.orders_today ?? 0} of ${jarvis.max_orders_per_day ?? 20} · Owner PIN: ${jarvis.pin_set ? "set" : "not set"}</div>
         <div class="row"><button class="btn small" id="jv-key">${jarvis.key_set ? "Make a new Jarvis key" : "Create Jarvis key"}</button>
-          ${jarvis.key_set ? `<button class="btn small" id="jv-toggle">${jarvis.enabled ? "Switch Jarvis off" : "Switch Jarvis on"}</button>` : ""}</div>
+          ${jarvis.key_set ? `<button class="btn small" id="jv-toggle">${jarvis.enabled ? "Switch Jarvis off" : "Switch Jarvis on"}</button>` : ""}
+          ${jarvis.key_set ? `<button class="btn small" id="jv-auto">${jarvis.autopilot_enabled ? "Switch autopilot off" : "Switch autopilot on"}</button>` : ""}</div>
+        <div class="muted">Autopilot: ${jarvis.autopilot_enabled ? "on: Jarvis picks its own paper trades, each with a written reason in the Log" : "off: Jarvis only trades when you ask"}</div>
         <div id="jv-box"></div>
         <div class="grid2">
           <label class="field">Most contracts per Jarvis order<input type="number" min="0.001" step="any" id="jv-qty" value="${jarvis.max_quantity ?? 1}"></label>
@@ -120,6 +122,7 @@ export async function renderSettings(el) {
     el.querySelector("#jv-box").innerHTML = `<div class="message">${escapeHtml(note)}<br><code class="num">${escapeHtml(key)}</code></div>`;
   });
   click("#jv-toggle", async () => { await put("/api/owner/jarvis", { enabled: !jarvis.enabled }); renderSettings(el); });
+  click("#jv-auto", async () => { await put("/api/owner/jarvis", { autopilot_enabled: !jarvis.autopilot_enabled }); renderSettings(el); });
   click("#jv-save", async () => {
     const ids = [...el.querySelectorAll("[data-jv-account]")].filter((c) => c.checked).map((c) => c.dataset.jvAccount);
     await put("/api/owner/jarvis", { max_quantity: Number(el.querySelector("#jv-qty").value), max_orders_per_day: Number(el.querySelector("#jv-day").value), allowed_account_ids: ids });

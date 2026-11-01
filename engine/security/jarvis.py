@@ -9,6 +9,9 @@ On top of the risk guard, which checks every Jarvis order like any other:
     the owner allowed (none listed = every paper account).
   - Each order has a contract cap and there is a daily order cap.
   - Closing, tightening and the kill switch are always allowed.
+  - Autopilot (Jarvis deciding trades itself) has its own switch, off by
+    default, and every autopilot order must carry a written reason, which is
+    saved in the guard log so the owner can review each decision.
 
 The key is stored as a hash, so it can't be read back from the database.
 
@@ -33,7 +36,9 @@ from engine.storage.database import connect
 log = logging.getLogger(__name__)
 
 JARVIS_SOURCE = "automation:jarvis"
-DEFAULTS = {"enabled": False, "max_quantity": 1.0, "max_orders_per_day": 20, "allowed_account_ids": []}
+AUTOPILOT_SOURCE = "automation:jarvis-ai"   # trades Jarvis decided on its own
+MIN_REASON_LENGTH = 15
+DEFAULTS = {"enabled": False, "autopilot_enabled": False, "max_quantity": 1.0, "max_orders_per_day": 20, "allowed_account_ids": []}
 PIN_MAX_FAILURES = 5
 PIN_LOCK_SECONDS = 60
 
@@ -91,6 +96,8 @@ class JarvisAccess:
         config = self._config()
         if "enabled" in changes:
             config["enabled"] = bool(changes["enabled"])
+        if "autopilot_enabled" in changes:
+            config["autopilot_enabled"] = bool(changes["autopilot_enabled"])
         if "max_quantity" in changes:
             value = float(changes["max_quantity"])
             if not 0 < value <= 100:
@@ -132,6 +139,13 @@ class JarvisAccess:
         allowed = self._config()["allowed_account_ids"]
         if allowed and account.id not in allowed:
             return f"Jarvis isn't allowed to trade {account.name}. The owner can allow it in Settings."
+        return None
+
+    def autopilot_problem(self, reason: str | None) -> str | None:
+        if not self._config()["autopilot_enabled"]:
+            return "Autopilot is switched off. Only the owner can switch it on, in Settings, Jarvis."
+        if not reason or len(reason.strip()) < MIN_REASON_LENGTH:
+            return "An autopilot trade needs a written reason (why this trade, why now)."
         return None
 
     def order_problem(self, quantity: float) -> str | None:

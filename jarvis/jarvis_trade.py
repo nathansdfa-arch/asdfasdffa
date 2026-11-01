@@ -23,6 +23,7 @@ import json
 import os
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -81,6 +82,15 @@ def main(argv=None) -> int:
     p.add_argument("--stop", required=True, type=float, help="stop-loss price")
     p.add_argument("--target", type=float, help="take-profit price")
     p.add_argument("--limit", type=float, help="limit price (leave out for a market order)")
+    p.add_argument("--autopilot", action="store_true", help="this is Jarvis's own decision (autopilot); needs --reason")
+    p.add_argument("--reason", help="why this trade, why now (required with --autopilot)")
+
+    p = commands.add_parser("candles", help="recent price candles for a symbol")
+    p.add_argument("--symbol", required=True)
+    p.add_argument("--timeframe", default="5m")
+    p.add_argument("--count", type=int, default=100)
+
+    commands.add_parser("autopilot", help="is autopilot on, and Jarvis's recent autopilot decisions")
 
     p = commands.add_parser("move-stop", help="move the stop of an open position")
     p.add_argument("--account", required=True)
@@ -113,8 +123,14 @@ def main(argv=None) -> int:
     if c == "order":
         body = {"account_id": args.account, "symbol": args.symbol, "side": args.side, "quantity": args.qty,
                 "stop_loss": args.stop, "take_profit": args.target,
-                "order_type": "limit" if args.limit is not None else "market", "price": args.limit}
+                "order_type": "limit" if args.limit is not None else "market", "price": args.limit,
+                "autopilot": args.autopilot, "reason": args.reason}
         return call(url, key, "POST", "/api/jarvis/orders", body)
+    if c == "candles":
+        query = urllib.parse.urlencode({"symbol": args.symbol, "timeframe": args.timeframe, "limit": args.count})
+        return call(url, key, "GET", f"/api/jarvis/candles?{query}")
+    if c == "autopilot":
+        return call(url, key, "GET", "/api/jarvis/autopilot")
     if c == "move-stop":
         return call(url, key, "POST", "/api/jarvis/positions/stop", {"account_id": args.account, "symbol": args.symbol, "price": args.price})
     if c == "close":

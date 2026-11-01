@@ -133,3 +133,58 @@ def test_jarvis_can_stop_but_not_unpause_a_runaway_strategy(tmp_path):
     reply = client.post(f"/api/jarvis/strategies/{run['id']}/start", headers=key)
     assert reply.status_code == 403 and "Only the owner" in reply.json()["error"]
     assert client.post(f"/api/jarvis/strategies/{run['id']}/stop", headers=key).json()["status"] == "stopped by Jarvis"
+
+
+# ---- Autopilot: Jarvis deciding trades itself (paper only) ------------------------------
+
+
+def test_autopilot_is_off_until_the_owner_switches_it_on(tmp_path):
+    client, key, engine, paper = setup(tmp_path)
+    reply = client.post("/api/jarvis/orders", headers=key, json=order(paper.id, autopilot=True, reason="Bounce off the morning low with rising volume"))
+    assert reply.status_code == 403 and "Autopilot is switched off" in reply.json()["error"]
+
+
+def test_autopilot_trades_need_a_written_reason(tmp_path):
+    client, key, engine, paper = setup(tmp_path)
+    client.put("/api/owner/jarvis", json={"autopilot_enabled": True})
+    reply = client.post("/api/jarvis/orders", headers=key, json=order(paper.id, autopilot=True, reason="looks good"))
+    assert reply.status_code == 403 and "written reason" in reply.json()["error"]
+
+
+def test_autopilot_trades_are_labelled_and_their_reason_is_kept(tmp_path):
+    client, key, engine, paper = setup(tmp_path)
+    client.put("/api/owner/jarvis", json={"autopilot_enabled": True})
+    reason = "Bounce off the morning low with rising volume"
+    assert client.post("/api/jarvis/orders", headers=key, json=order(paper.id, autopilot=True, reason=reason)).status_code == 200
+    guard_decision, note = engine.journal.decisions(limit=2)
+    assert guard_decision["source"] == note["source"] == "automation:jarvis-ai"
+    assert note["action"] == "autopilot_reason" and note["reason"] == reason
+    recent = client.get("/api/jarvis/autopilot", headers=key).json()
+    assert recent["autopilot_enabled"] and any(d["reason"] == reason for d in recent["recent"])
+
+
+def test_autopilot_still_obeys_paper_only_and_the_caps(tmp_path):
+    client, key, engine, paper = setup(tmp_path)
+    client.put("/api/owner/jarvis", json={"autopilot_enabled": True})
+    live = engine.accounts.create("Broker", broker="bybit", starting_balance=1000.0)
+    live.live_enabled = True
+    engine.accounts.save(live)
+    reason = "Bounce off the morning low with rising volume"
+    assert client.post("/api/jarvis/orders", headers=key, json=order(live.id, autopilot=True, reason=reason)).status_code == 403
+    assert client.post("/api/jarvis/orders", headers=key, json=order(paper.id, qty=2, autopilot=True, reason=reason)).status_code == 403
+
+
+def test_only_the_owner_can_switch_autopilot_on_once_a_pin_is_set(tmp_path):
+    client, key, engine, paper = setup(tmp_path)
+    client.post("/api/owner/pin", json={"pin": "4826"})
+    assert client.put("/api/owner/jarvis", json={"autopilot_enabled": True}).status_code == 403
+    assert not engine.jarvis.status()["autopilot_enabled"]
+
+
+def test_jarvis_can_read_candles(tmp_path):
+    client, key, engine, paper = setup(tmp_path)
+    reply = client.get("/api/jarvis/candles?symbol=DEMO:ES&timeframe=5m&limit=20", headers=key)
+    assert reply.status_code == 200
+    body = reply.json()
+    assert body["columns"][4] == "close" and len(body["candles"]) <= 20
+    assert client.get("/api/jarvis/candles?symbol=NOPE&timeframe=5m", headers=key).status_code == 400
