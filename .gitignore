@@ -10,3 +10,6 @@ __pycache__/
 *.db-shm
 *.log
 .env
+
+# The Jarvis key (secret)
+jarvis/jarvis_key.txt

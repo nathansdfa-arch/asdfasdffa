@@ -56,14 +56,27 @@ Passwords and API keys are stored in Windows Credential Manager, never in the da
 - Decide where the always-on engine runs: your own Windows PC, or a rented Windows cloud server (bible open question).
 - The app makes its own security certificate, so phones show a "not secure" warning the first time. Our recommendation is **Tailscale** (free for personal use): it gives your phone a private, encrypted link to your PC without opening anything to the internet. That is a third-party service, so we didn't set it up without asking.
 
-## 8. Smaller decisions
+## 8. Jarvis (voice trading, added 1 November 2026)
+
+Jarvis can now work the trading app: check accounts, start and stop strategies, place orders you ask for out loud, close positions and press the kill switch. It can only trade **paper** accounts, every order needs a stop, and every order still goes through the risk guard.
+
+To switch it on:
+1. In the app, open **Settings, Jarvis** and press **Create Jarvis key**. Copy the key.
+2. Copy the `jarvis` folder from this app (`jarvis_trade.py` and `JARVIS_TRADING.md`) into the folder Jarvis's Claude session works in. Save the key in a file called `jarvis_key.txt` next to `jarvis_trade.py`.
+3. Add a line to that folder's `CLAUDE.md`: "For anything about trading, follow JARVIS_TRADING.md."
+4. **Set an owner PIN** in the same Settings section. Without it, any program on your PC could press owner-only buttons such as switching an account to live. With it, those buttons ask for the PIN.
+5. Set Jarvis's limits there too: contracts per order (default 1), orders per day (default 20) and which paper accounts it may use.
+
+Still open: Jarvis can't decide trades on its own. Strategies decide; Jarvis runs them. Tell us if you want an AI-decides experiment on paper.
+
+## 9. Smaller decisions
 
 - **Keyboard shortcuts:** which matter most? (None are set yet except Escape to leave a maximized chart.)
 - **Sounds:** alert sounds are off by default. Turn them on in Settings if you want a sound for the 70% warning, blocks and disconnects.
 - **Light theme:** add one later, or stay dark only?
 - **HyroTrader, Breakout, or both** for crypto, and in what order?
 
-## 9. Changes from the bible we made on our own (please approve or overrule)
+## 10. Changes from the bible we made on our own (please approve or overrule)
 
 - **Screens are plain JavaScript, not React.** Same Lightweight Charts library, but no build step, so nothing extra (like Node.js) has to be installed on your PC and the app starts straight from the folder. Easy to switch later if needed.
 - **Demo prices.** Futures, forex and stocks have no free live feed until Rithmic or MT5 is connected, so the app includes clearly labelled "DEMO" symbols with practice prices that work offline. They let you try charts, scripts, backtests and paper trading now. They are not real market prices.

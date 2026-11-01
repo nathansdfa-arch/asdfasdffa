@@ -19,7 +19,9 @@ export async function saveSetting(key, value) {
 export async function renderSettings(el) {
   const s = store.settings;
   const local = ["127.0.0.1", "localhost"].includes(location.hostname);
-  const [auth, backups] = await Promise.all([get("/api/auth/status").catch(() => ({})), get("/api/backups").catch(() => [])]);
+  const [auth, backups, jarvis] = await Promise.all([get("/api/auth/status").catch(() => ({})), get("/api/backups").catch(() => []), get("/api/owner/jarvis").catch(() => ({}))]);
+  const allowed = new Set(jarvis.allowed_account_ids || []);
+  const paperAccounts = (store.accounts || []).filter((a) => a.mode === "PAPER");
   el.innerHTML = `
     <div class="section"><h3>Theme <span class="muted">(proposals: pick the one you like, or tell us to change them)</span></h3>
       <div class="grid2">${Object.entries(THEMES).map(([key, t]) => `
@@ -64,6 +66,24 @@ export async function renderSettings(el) {
         <p class="muted">Remote access needs a password and two-factor. It is off by default. See NEEDS_NATHAN.md for how to reach it safely from your phone.</p>
       </div>` : `<p class="muted">Security settings can only be changed on the computer running the engine.</p>`}
     </div>
+    <div class="section"><h3>Jarvis</h3>
+      ${local ? `
+      <div class="stack">
+        <div class="muted">Jarvis: ${jarvis.key_set ? (jarvis.enabled ? "on" : "off") : "no key yet"} · Orders today: ${jarvis.orders_today ?? 0} of ${jarvis.max_orders_per_day ?? 20} · Owner PIN: ${jarvis.pin_set ? "set" : "not set"}</div>
+        <div class="row"><button class="btn small" id="jv-key">${jarvis.key_set ? "Make a new Jarvis key" : "Create Jarvis key"}</button>
+          ${jarvis.key_set ? `<button class="btn small" id="jv-toggle">${jarvis.enabled ? "Switch Jarvis off" : "Switch Jarvis on"}</button>` : ""}</div>
+        <div id="jv-box"></div>
+        <div class="grid2">
+          <label class="field">Most contracts per Jarvis order<input type="number" min="0.001" step="any" id="jv-qty" value="${jarvis.max_quantity ?? 1}"></label>
+          <label class="field">Most Jarvis orders per day<input type="number" min="0" max="500" id="jv-day" value="${jarvis.max_orders_per_day ?? 20}"></label>
+        </div>
+        <div class="muted">Paper accounts Jarvis may trade (none ticked = all paper accounts):</div>
+        ${paperAccounts.map((a) => `<label class="field row"><input type="checkbox" data-jv-account="${a.id}" ${allowed.has(a.id) ? "checked" : ""}> ${escapeHtml(a.name)}</label>`).join("")}
+        <div class="row"><button class="btn small" id="jv-save">Save Jarvis limits</button></div>
+        <div class="row"><input type="password" inputmode="numeric" id="pin" placeholder="New owner PIN (4-12 digits)"><button class="btn small" id="pin-save">${jarvis.pin_set ? "Change PIN" : "Set PIN"}</button></div>
+        <p class="muted">Jarvis can only trade paper accounts, and every Jarvis order still goes through the risk guard. Set an owner PIN so only you can switch accounts to live, resume after the kill switch or change these limits.</p>
+      </div>` : `<p class="muted">Jarvis settings can only be changed on the computer running the engine.</p>`}
+    </div>
     <div class="section"><h3>Backups</h3>
       <div class="row spread"><span class="muted">${backups.length} saved (one a day, last 30 kept)</span><button class="btn small" id="backup">Back up now</button></div>
     </div>
@@ -95,6 +115,17 @@ export async function renderSettings(el) {
     });
   });
   click("#remote", async () => { const r = await post("/api/auth/remote", { enabled: !auth.remote_enabled }); toast(r.note); renderSettings(el); });
+  click("#jv-key", async () => {
+    const { key, note } = await post("/api/owner/jarvis/key");
+    el.querySelector("#jv-box").innerHTML = `<div class="message">${escapeHtml(note)}<br><code class="num">${escapeHtml(key)}</code></div>`;
+  });
+  click("#jv-toggle", async () => { await put("/api/owner/jarvis", { enabled: !jarvis.enabled }); renderSettings(el); });
+  click("#jv-save", async () => {
+    const ids = [...el.querySelectorAll("[data-jv-account]")].filter((c) => c.checked).map((c) => c.dataset.jvAccount);
+    await put("/api/owner/jarvis", { max_quantity: Number(el.querySelector("#jv-qty").value), max_orders_per_day: Number(el.querySelector("#jv-day").value), allowed_account_ids: ids });
+    toast("Jarvis limits saved"); renderSettings(el);
+  });
+  click("#pin-save", async () => { await post("/api/owner/pin", { pin: el.querySelector("#pin").value }); toast("Owner PIN saved"); renderSettings(el); });
   click("#backup", async () => { await post("/api/backups"); toast("Backup saved"); renderSettings(el); });
 }
 
