@@ -14,6 +14,7 @@ Security (bible sections 4 and 11):
 """
 
 import logging
+import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -22,7 +23,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from engine import paths
-from engine.api import routes_market, routes_scripts, routes_system, routes_trading
+from engine.api import routes_jarvis, routes_market, routes_scripts, routes_system, routes_trading
 from engine.api.live import Client, LiveHub
 from engine.runtime import Engine
 from engine.security.auth import Auth
@@ -33,6 +34,22 @@ LOCAL_ADDRESSES = {"127.0.0.1", "::1", "localhost"}
 SESSION_COOKIE = "trading_session"
 # Pages and files a remote device may load before logging in.
 PUBLIC_PATHS = ("/login.html", "/api/auth/login", "/api/auth/status", "/css/", "/vendor/", "/favicon")
+
+# Buttons only the owner may press. Once an owner PIN is set, these need it in the
+# X-Owner-Pin header, so no program on this computer (Jarvis included) can press them.
+OWNER_ONLY = [
+    ("POST", re.compile(r"^/api/accounts/[^/]+/(enable-live|resume|accept-balance|secret)$")),
+    ("PUT", re.compile(r"^/api/accounts/[^/]+$")),
+    ("DELETE", re.compile(r"^/api/accounts/[^/]+$")),
+    ("POST", re.compile(r"^/api/(trading|sources)/resume$")),
+    ("POST", re.compile(r"^/api/auth/(password|two-factor/start|two-factor/confirm|remote)$")),
+    ("POST", re.compile(r"^/api/owner/")),
+    ("PUT", re.compile(r"^/api/owner/")),
+]
+
+
+def owner_only(method: str, path: str) -> bool:
+    return any(m == method and pattern.match(path) for m, pattern in OWNER_ONLY)
 
 
 def create_app(db_path: Path | None = None, allow_any_client: bool = False, start_engine: bool = True, engine: Engine | None = None) -> FastAPI:
@@ -55,9 +72,17 @@ def create_app(db_path: Path | None = None, allow_any_client: bool = False, star
     app.state.engine = engine
     app.state.auth = auth
     app.state.hub = hub
+    app.state.jarvis = engine.jarvis
 
     def is_local(client: str | None) -> bool:
         return allow_any_client or client in LOCAL_ADDRESSES
+
+    @app.middleware("http")
+    async def owner_pin(request: Request, call_next):
+        # Registered first, so it runs after the gatekeeper below has let the request in.
+        if owner_only(request.method, request.url.path) and not engine.jarvis.pin_ok(request.headers.get("x-owner-pin")):
+            return JSONResponse(status_code=403, content={"error": "This needs the owner PIN.", "pin_required": True})
+        return await call_next(request)
 
     @app.middleware("http")
     async def gatekeeper(request: Request, call_next):
@@ -79,7 +104,7 @@ def create_app(db_path: Path | None = None, allow_any_client: bool = False, star
         from fastapi.responses import RedirectResponse
         return RedirectResponse("/login.html")
 
-    for module in (routes_system, routes_market, routes_trading, routes_scripts):
+    for module in (routes_system, routes_market, routes_trading, routes_scripts, routes_jarvis):
         app.include_router(module.router)
 
     @app.websocket("/ws")

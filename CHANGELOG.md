@@ -2,6 +2,14 @@
 
 Every change to the app, newest first, in plain language.
 
+## 0.3.0 (1 November 2026): Jarvis can work the app
+
+- **Jarvis door.** Your voice assistant Jarvis gets its own key and its own addresses (`/api/jarvis/...`): status, strategies start/stop, orders, move stop, close, close all, kill switch, log. Every Jarvis order goes through the risk guard, labelled "automation:jarvis", so the guard log shows which trades were Jarvis's and the runaway-order limit applies.
+- **Jarvis limits.** Paper accounts only, a stop on every order, contracts per order and orders per day caps, an allowed-accounts list, and an on/off switch in Settings.
+- **Owner PIN.** Once set, switching to live, resuming after the kill switch, changing account rules, security settings and Jarvis's own settings need the PIN, so no program on the PC can press them.
+- **Jarvis autopilot (paper only).** A separate owner switch lets Jarvis pick its own trades. Every autopilot order must carry a written reason, saved in the guard log as "automation:jarvis-ai", and obeys the same paper-only rule, caps and risk guard. Jarvis can read recent candles through its door.
+- **`jarvis/jarvis_trade.py` and `jarvis/JARVIS_TRADING.md`.** The helper Jarvis runs and the instructions it follows.
+
 ## 0.2.0 (31 October 2026): the full first build (phases 2 to 14)
 
 Built overnight at the owner's request. See NEEDS_NATHAN.md for what needs a decision or a test.
