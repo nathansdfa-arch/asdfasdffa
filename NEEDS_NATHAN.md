@@ -69,3 +69,14 @@ Passwords and API keys are stored in Windows Credential Manager, never in the da
 - **Demo prices.** Futures, forex and stocks have no free live feed until Rithmic or MT5 is connected, so the app includes clearly labelled "DEMO" symbols with practice prices that work offline. They let you try charts, scripts, backtests and paper trading now. They are not real market prices.
 - **Windows memory limit for scripts.** On Windows, scripts are limited by the 2-second timeout but not by a memory cap (that part only works on Mac/Linux). A script that tries to use huge amounts of memory could slow the PC. Low risk, on the list to improve.
 - **Approval per phase was skipped** because you asked us to build everything overnight. Every phase can still be reviewed and changed.
+
+## 10. TJR Boot Camp strategy (new)
+
+Two new scripts are in the Scripts panel: **TJR Boot Camp strategy** and **TJR Boot Camp chart view**. The rules come from the write-up in `docs/TJR_STRATEGY.md`. It runs on practice money only, like every other strategy.
+
+- **Use it on a 5 minute chart.** It builds the 15 minute, 1 hour, 4 hour and daily candles itself. In paper trading it needs a few days of candles before the daily trend is known, so it may sit out the first days.
+- **Set `point_value` for your market** before testing (ES = 50, MES = 5, most CFDs = 1). Size comes from `risk_dollars` (default $250, 1% of 25K).
+- **News days:** the app has no economic calendar yet, so type CPI, PPI, FOMC, NFP, Fed Chair and bank holiday dates into `skip_dates`. A built-in calendar would be a later update.
+- **It trades rarely, on purpose.** It needs the daily, 4 hour and 1 hour to agree, a touch of a 1 hour or 4 hour zone, then a sweep and break on the 5 minute inside 9:30 to 11:00, then a pullback, and at least 1:1 to the first target. On 120 days of practice prices it took 2 trades. Practice prices aren't real market behaviour, so judge it on real history.
+- **Choices I made where TJR doesn't say** (all can be changed in the inputs or the code): which highs count as liquidity (the latest 5 minute and 15 minute swings), entering at market after the pullback instead of a resting limit order, the last target (1 hour liquidity, or 3R if there is none), and closing everything at 15:50 New York time.
+- **Not in yet:** the London 30 minute box strategy (never taught in the videos), the "4 hour against the daily" exception (rule 16), and the optional time stop (rule 35).
