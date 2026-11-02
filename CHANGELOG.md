@@ -2,6 +2,12 @@
 
 Every change to the app, newest first, in plain language.
 
+## Unreleased
+
+- **TJR Boot Camp strategy.** A new example strategy built from the TJR Boot Camp write-up (`docs/TJR_STRATEGY.md`). Daily bias confirmed by the 4 hour and 1 hour, a 1 hour or 4 hour zone, then a 5 minute liquidity sweep and break of structure from 9:30 to 11:00 New York time, an entry on the pullback into the order block or fair value gap, a stop past the sweep, and half off at the first target with the stop moved to break-even. One trade a day. See NEEDS_NATHAN.md section 10.
+- **TJR Boot Camp chart view.** An indicator showing the 5 minute swings, the 1 hour 50% line, the daily and 4 hour trend, and the trading window.
+- New example scripts are now added to existing installs on the next start. Examples you already have, including edited ones, are left alone.
+
 ## 0.2.0 (31 October 2026): the full first build (phases 2 to 14)
 
 Built overnight at the owner's request. See NEEDS_NATHAN.md for what needs a decision or a test.
