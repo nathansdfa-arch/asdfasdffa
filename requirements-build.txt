@@ -1,0 +1,4 @@
+# Extra packages used only to build the Windows app and installer (packaging/).
+-r requirements.txt
+pyinstaller==6.22.3                  # bundles Python and the app into TradingApp.exe (GPL with an exception that allows this use)
+pyinstaller-hooks-contrib==2026.9    # PyInstaller's recipes for packages like pywebview and keyring (Apache/GPL)

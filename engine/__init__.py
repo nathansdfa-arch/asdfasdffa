@@ -7,4 +7,4 @@ to the engine through its local API.
 """
 
 # The app's version number. Bump it in CHANGELOG.md too when it changes.
-__version__ = "0.3.0"
+__version__ = "0.4.0"

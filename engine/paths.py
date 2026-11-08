@@ -40,6 +40,33 @@ def logs_dir() -> Path:
     return folder
 
 
+def is_packaged() -> bool:
+    """True when running as the installed Windows app (built with PyInstaller), not from source."""
+    return bool(getattr(sys, "frozen", False))
+
+
+def resource_dir() -> Path:
+    """The folder holding the app's own read-only files: ui/, config/ and scripts/examples/.
+
+    From source that is the project folder. In the installed app PyInstaller
+    unpacks them into its bundle folder (sys._MEIPASS). The owner's data never
+    lives here; see data_dir().
+    """
+    if is_packaged():
+        return Path(getattr(sys, "_MEIPASS", Path(sys.executable).resolve().parent))
+    return Path(__file__).resolve().parent.parent
+
+
 def ui_dir() -> Path:
     """The folder holding the screens (HTML, CSS, JavaScript) that the engine serves."""
-    return Path(__file__).resolve().parent.parent / "ui"
+    return resource_dir() / "ui"
+
+
+def config_dir() -> Path:
+    """Markets, prop firm rule profiles and signup links."""
+    return resource_dir() / "config"
+
+
+def examples_dir() -> Path:
+    """The example scripts loaded on first start."""
+    return resource_dir() / "scripts" / "examples"

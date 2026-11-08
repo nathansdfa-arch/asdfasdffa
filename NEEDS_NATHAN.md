@@ -83,7 +83,7 @@ To switch it on:
 - **Windows memory limit for scripts.** On Windows, scripts are limited by the 2-second timeout but not by a memory cap (that part only works on Mac/Linux). A script that tries to use huge amounts of memory could slow the PC. Low risk, on the list to improve.
 - **Approval per phase was skipped** because you asked us to build everything overnight. Every phase can still be reviewed and changed.
 
-## 10. TJR Boot Camp strategy (new)
+## 11. TJR Boot Camp strategy (new)
 
 Two new scripts are in the Scripts panel: **TJR Boot Camp strategy** and **TJR Boot Camp chart view**. The rules come from the write-up in `docs/TJR_STRATEGY.md`. It runs on practice money only, like every other strategy.
 
@@ -92,4 +92,16 @@ Two new scripts are in the Scripts panel: **TJR Boot Camp strategy** and **TJR B
 - **News days:** the app has no economic calendar yet, so type CPI, PPI, FOMC, NFP, Fed Chair and bank holiday dates into `skip_dates`. A built-in calendar would be a later update.
 - **It trades rarely, on purpose.** It needs the daily, 4 hour and 1 hour to agree, a touch of a 1 hour or 4 hour zone, then a sweep and break on the 5 minute inside 9:30 to 11:00, then a pullback, and at least 1:1 to the first target. On 120 days of practice prices it took 2 trades. Practice prices aren't real market behaviour, so judge it on real history.
 - **Choices I made where TJR doesn't say** (all can be changed in the inputs or the code): which highs count as liquidity (the latest 5 minute and 15 minute swings), entering at market after the pullback instead of a resting limit order, the last target (1 hour liquidity, or 3R if there is none), and closing everything at 15:50 New York time.
+- **Very tight stops can oversize the trade.** In a 60 day practice-price backtest it put its stop half a point past the sweep, so the $250 risk bought 10 ES contracts; the market opened a point beyond the stop and the trade lost $550, more than twice the planned risk. Decide whether to add a minimum stop distance (for example 2 points on ES) or a contract cap. Tell me the numbers and I'll add them.
 - **Not in yet:** the London 30 minute box strategy (never taught in the videos), the "4 hour against the daily" exception (rule 16), and the optional time stop (rule 35).
+
+## 12. The installed Windows app (new, 8 November 2026)
+
+The app is now a normal Windows program with an installer. Steps are in [INSTALL.md](INSTALL.md).
+
+- **Try the installer** from the PR's build (Actions > newest "Windows app" run > Artifacts). Check that it opens in its own window, that your accounts and scripts from `start_app.bat` are all there (same data folder), and that the Start menu has "Trading App".
+- **"Windows protected your PC" warning.** The installer isn't code-signed, so Windows warns the first time (More info > Run anyway). Removing that needs a code-signing certificate, which costs money (roughly $100 to $400 a year, or Microsoft's Trusted Signing service at about $10 a month). Your call whether and when.
+- **Releases.** After this is merged, pushing a version tag (for example `v0.4.0`) publishes the installer on the GitHub Releases page. Tell me when and I'll do it.
+- **Updates** are manual for now: run the newer installer. An "update available" check inside the app would be a later step.
+- `start_app.bat` still works for running from the source code.
+

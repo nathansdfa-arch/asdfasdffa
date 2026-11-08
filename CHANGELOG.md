@@ -2,10 +2,20 @@
 
 Every change to the app, newest first, in plain language.
 
-## Unreleased
+## 0.4.0 (8 November 2026): an installable Windows app
+
+- **Installer.** `TradingApp-Setup-0.4.0.exe` installs the app like any Windows program: Start menu and desktop icons, an uninstaller in Settings > Apps, no Python or setup needed, no administrator password. Python and every package are built in. See INSTALL.md.
+- **Native window, not Electron.** The window uses Microsoft Edge WebView2, which is part of Windows 10 and 11, so the app is small and starts fast. If WebView2 is missing, the installer offers the download and the app opens in the browser meanwhile.
+- **All add-ons included:** Jarvis door and autopilot (0.3.0), the TJR Boot Camp strategy and chart view, and MetaTrader 5 support (built in when its package is available).
+- **Watchlists and the chosen account now stay after a restart** in the app window. Before, the window forgot them each time it closed.
+- **Clear messages** when something goes wrong at start, instead of a console that closes.
+- **Automatic build and check.** Every change is built on a Windows machine at GitHub, which installs the app, starts it, runs a script and a TJR backtest inside it, checks paper mode and the sandbox, and uninstalls it.
+- Nothing about trading changed: same risk guard, same paper-only rules, same data folder.
+
+### Earlier, not released separately
 
 - **Launcher fix.** MetaTrader 5 support is now a separate, optional install (`requirements-mt5.txt`). Before, `start_app.bat` failed on new Python versions (such as 3.15) that MetaQuotes has no package for yet. Now the app opens anyway and only MetaTrader 5 accounts show as unavailable.
-- **TJR Boot Camp strategy.** A new example strategy built from the TJR Boot Camp write-up (`docs/TJR_STRATEGY.md`). Daily bias confirmed by the 4 hour and 1 hour, a 1 hour or 4 hour zone, then a 5 minute liquidity sweep and break of structure from 9:30 to 11:00 New York time, an entry on the pullback into the order block or fair value gap, a stop past the sweep, and half off at the first target with the stop moved to break-even. One trade a day. See NEEDS_NATHAN.md section 10.
+- **TJR Boot Camp strategy.** A new example strategy built from the TJR Boot Camp write-up (`docs/TJR_STRATEGY.md`). Daily bias confirmed by the 4 hour and 1 hour, a 1 hour or 4 hour zone, then a 5 minute liquidity sweep and break of structure from 9:30 to 11:00 New York time, an entry on the pullback into the order block or fair value gap, a stop past the sweep, and half off at the first target with the stop moved to break-even. One trade a day. See NEEDS_NATHAN.md section 11.
 - **TJR Boot Camp chart view.** An indicator showing the 5 minute swings, the 1 hour 50% line, the daily and 4 hour trend, and the trading window.
 - New example scripts are now added to existing installs on the next start. Examples you already have, including edited ones, are left alone.
 

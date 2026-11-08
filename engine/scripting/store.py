@@ -5,9 +5,10 @@ import re
 import uuid
 from pathlib import Path
 
+from engine import paths
 from engine.storage.database import connect, utc_now
 
-EXAMPLES_DIR = Path(__file__).resolve().parent.parent.parent / "scripts" / "examples"
+EXAMPLES_DIR = paths.examples_dir()
 
 
 def guess_kind(code: str) -> str:

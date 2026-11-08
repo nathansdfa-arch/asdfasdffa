@@ -11,7 +11,9 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-CONFIG_DIR = Path(__file__).resolve().parent.parent.parent / "config"
+from engine import paths
+
+CONFIG_DIR = paths.config_dir()
 
 
 @dataclass(frozen=True)
