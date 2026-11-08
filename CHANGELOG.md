@@ -5,6 +5,9 @@ Every change to the app, newest first, in plain language.
 ## Unreleased
 
 - **Launcher fix.** MetaTrader 5 support is now a separate, optional install (`requirements-mt5.txt`). Before, `start_app.bat` failed on new Python versions (such as 3.15) that MetaQuotes has no package for yet. Now the app opens anyway and only MetaTrader 5 accounts show as unavailable.
+- **TJR Boot Camp strategy.** A new example strategy built from the TJR Boot Camp write-up (`docs/TJR_STRATEGY.md`). Daily bias confirmed by the 4 hour and 1 hour, a 1 hour or 4 hour zone, then a 5 minute liquidity sweep and break of structure from 9:30 to 11:00 New York time, an entry on the pullback into the order block or fair value gap, a stop past the sweep, and half off at the first target with the stop moved to break-even. One trade a day. See NEEDS_NATHAN.md section 10.
+- **TJR Boot Camp chart view.** An indicator showing the 5 minute swings, the 1 hour 50% line, the daily and 4 hour trend, and the trading window.
+- New example scripts are now added to existing installs on the next start. Examples you already have, including edited ones, are left alone.
 
 ## 0.3.0 (1 November 2026): Jarvis can work the app
 
