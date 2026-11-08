@@ -9,6 +9,11 @@ What it does, step by step:
   4. When the window closes, stops the engine if this launcher started it.
 
 Add --browser to open the app in your normal web browser instead of a window.
+
+The installed Windows app (TradingApp.exe, see packaging/) runs this same code.
+There, the engine is started as "TradingApp.exe --engine" instead of
+"python -m engine", and problems are shown in a message box because the app
+has no console window.
 """
 
 import argparse
@@ -21,6 +26,7 @@ import urllib.error
 import urllib.request
 import webbrowser
 
+from engine import __version__, paths
 from engine.__main__ import DEFAULT_PORT, HOST
 from engine.logging_setup import setup_logging
 
@@ -42,10 +48,28 @@ def engine_is_running(port: int) -> bool:
         return False
 
 
+def engine_command(port: int) -> list[str]:
+    """The command that starts the engine: the installed app runs itself in engine mode."""
+    if paths.is_packaged():
+        return [sys.executable, "--engine", "--port", str(port)]
+    return [sys.executable, "-m", "engine", "--port", str(port)]
+
+
 def start_engine(port: int) -> subprocess.Popen:
     """Start the engine as its own program, using the same Python as this launcher."""
     log.info("Starting the engine on port %d", port)
-    return subprocess.Popen([sys.executable, "-m", "engine", "--port", str(port)])
+    return subprocess.Popen(engine_command(port))
+
+
+def tell_owner(message: str) -> None:
+    """Show a problem to the owner: a Windows message box in the installed app, else the console."""
+    log.error(message)
+    if sys.platform == "win32" and paths.is_packaged():
+        import ctypes
+
+        ctypes.windll.user32.MessageBoxW(None, message, "Trading App", 0x10)   # 0x10 = error icon
+    else:
+        print(message, file=sys.stderr)
 
 
 def wait_for_engine(port: int, process: subprocess.Popen | None, timeout: float = STARTUP_TIMEOUT_SECONDS) -> bool:
@@ -76,8 +100,10 @@ def open_window(url: str) -> None:
     """Show the app in a desktop window. Returns when the owner closes it."""
     import webview  # pywebview; imported here so --browser works without it
 
-    webview.create_window("Trading App", url, width=1400, height=900, min_size=(900, 600))
-    webview.start()
+    webview.create_window(f"Trading App {__version__}", url, width=1400, height=900, min_size=(900, 600))
+    # private_mode=False keeps what the screens save in the window (the chosen
+    # account, custom watchlists) between restarts. It lives in the data folder.
+    webview.start(private_mode=False, storage_path=str(paths.data_dir() / "window"))
 
 
 def main() -> None:
@@ -93,7 +119,10 @@ def main() -> None:
     else:
         process = start_engine(args.port)
         if not wait_for_engine(args.port, process):
-            log.error("The engine did not start. See logs/app.log in the data folder for the reason.")
+            tell_owner(
+                "The trading engine did not start.\n\n"
+                f"The reason is in logs\\app.log inside {paths.data_dir()}"
+            )
             if process:
                 stop_engine(process)
             sys.exit(1)
@@ -106,7 +135,18 @@ def main() -> None:
             while process is None or process.poll() is None:
                 time.sleep(1)
         else:
-            open_window(url)
+            try:
+                open_window(url)
+            except Exception:
+                # Usually the Microsoft Edge WebView2 Runtime is missing. The browser still works.
+                log.exception("The desktop window could not open")
+                webbrowser.open(url)
+                tell_owner(
+                    "The app window could not open, so the app opened in your web browser instead.\n\n"
+                    "To fix the window, install the free Microsoft Edge WebView2 Runtime from "
+                    "https://developer.microsoft.com/microsoft-edge/webview2/ and start the app again.\n\n"
+                    "Close this message to stop the app."
+                )
     except KeyboardInterrupt:
         pass
     finally:

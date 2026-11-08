@@ -8,4 +8,6 @@ pandas==3.1.0         # data analysis library scripts may use (BSD license)
 websockets==17.4      # live price streams from Bybit (BSD license)
 keyring==25.7.0       # stores passwords and API keys in Windows Credential Manager (MIT license)
 cryptography==50.0.2  # HTTPS certificate for remote access (Apache/BSD license)
-MetaTrader5==5.0.6231; sys_platform == "win32"   # official MetaTrader 5 link, Windows only (MIT license)
+# MetaTrader5 is optional and lives in requirements-mt5.txt. MetaQuotes only
+# publishes it for some Python versions, so start_app.bat tries it separately
+# and the app still opens without it (MT5 accounts just show as unavailable).

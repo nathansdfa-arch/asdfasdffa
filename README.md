@@ -2,15 +2,13 @@
 
 A desktop-first trading platform: fast charts, Python scripts for indicators and strategies, backtests, paper trading, and automated trading behind a risk guard that can't be bypassed. The plan for the whole app is the design bible (version 2), kept in the project's files.
 
-**Current stage: version 0.2.0, the full first build.** Everything in the bible's 14 phases is in place for paper trading. Real brokers (Rithmic, MetaTrader 5, Bybit) are written but need your accounts and testing. **Start with [NEEDS_NATHAN.md](NEEDS_NATHAN.md).**
+**Current stage: version 0.4.0, an installable Windows app.** Everything in the bible's 14 phases is in place for paper trading, plus Jarvis and the TJR Boot Camp strategy. Real brokers (Rithmic, MetaTrader 5, Bybit) are written but need your accounts and testing. **Start with [NEEDS_NATHAN.md](NEEDS_NATHAN.md).**
 
 ## Opening the app on Windows
 
-1. Install **Python 3.12 or newer** from [python.org](https://www.python.org/downloads/). During setup, tick **"Add python.exe to PATH"**.
-2. Download this project (on GitHub: the green **Code** button, then **Download ZIP**) and unzip it.
-3. Double-click **`start_app.bat`**. The first time it spends a minute or two installing what it needs. After that it opens straight away.
+**Install it** with `TradingApp-Setup-<version>.exe` and open it from the Start menu. Nothing else is needed. Step by step, including where to download the installer: **[INSTALL.md](INSTALL.md)**.
 
-To use a web browser instead of a window, run `start_app.bat --browser`.
+Running from the source code instead (developers): install Python 3.12 or newer, download this project and double-click `start_app.bat`. Add `--browser` to use a web browser instead of a window.
 
 ## A five-minute tour
 
@@ -47,11 +45,13 @@ Everything the app saves is in one folder, kept apart from the code so updates n
 | `engine/strategy/` | Backtests and the runner for live strategies and automations. |
 | `engine/risk/` | The risk guard, trailing drawdown, prop firm profiles and the kill switch. |
 | `engine/execution/` | Accounts, the paper broker, and the Rithmic, MT5 and Bybit connectors. |
-| `engine/security/` | Credential storage, login and two-factor for remote access. |
+| `engine/security/` | Credential storage, login and two-factor for remote access, Jarvis's key and limits, the owner PIN. |
 | `engine/storage/` | The SQLite database, settings, workspaces, journal and backups. |
 | `config/` | Markets, prop firm rule profiles and signup links. Edit these without touching code. |
 | `scripts/examples/` | The example scripts loaded on first start. |
+| `jarvis/` | The helper and instructions your voice assistant Jarvis uses to work the app (see NEEDS_NATHAN.md, section 8). |
 | `desktop/` | The Windows window. It starts the engine and shows the screens. |
+| `packaging/` | Turns the app into `TradingApp.exe` and its installer (PyInstaller and Inno Setup). |
 | `ui/` | The screens (plain JavaScript, no build step). |
 | `tests/` | Automated tests. Double-click `run_tests.bat` to run them. |
 | `docs/` | Notes for the owner, including the Rithmic and prop firm questions to send. |
@@ -66,5 +66,7 @@ pytest                          run the tests
 python -m engine                run the engine alone, then open http://127.0.0.1:8765
 python -m desktop.launcher      run the engine and the desktop window
 ```
+
+The Windows installer is built by `.github/workflows/windows-app.yml` on every push, or by hand with `packaging\build_windows.bat` (see INSTALL.md).
 
 Set `TRADING_APP_DATA_DIR` to keep data somewhere other than the default folder.

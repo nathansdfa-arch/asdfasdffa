@@ -56,16 +56,52 @@ Passwords and API keys are stored in Windows Credential Manager, never in the da
 - Decide where the always-on engine runs: your own Windows PC, or a rented Windows cloud server (bible open question).
 - The app makes its own security certificate, so phones show a "not secure" warning the first time. Our recommendation is **Tailscale** (free for personal use): it gives your phone a private, encrypted link to your PC without opening anything to the internet. That is a third-party service, so we didn't set it up without asking.
 
-## 8. Smaller decisions
+## 8. Jarvis (voice trading, added 1 November 2026)
+
+Jarvis can now work the trading app: check accounts, start and stop strategies, place orders you ask for out loud, close positions and press the kill switch. It can only trade **paper** accounts, every order needs a stop, and every order still goes through the risk guard.
+
+To switch it on:
+1. In the app, open **Settings, Jarvis** and press **Create Jarvis key**. Copy the key.
+2. Copy the `jarvis` folder from this app (`jarvis_trade.py` and `JARVIS_TRADING.md`) into the folder Jarvis's Claude session works in. Save the key in a file called `jarvis_key.txt` next to `jarvis_trade.py`.
+3. Add a line to that folder's `CLAUDE.md`: "For anything about trading, follow JARVIS_TRADING.md."
+4. **Set an owner PIN** in the same Settings section. Without it, any program on your PC could press owner-only buttons such as switching an account to live. With it, those buttons ask for the PIN.
+5. Set Jarvis's limits there too: contracts per order (default 1), orders per day (default 20) and which paper accounts it may use.
+
+**Autopilot (you chose this on 1 November):** Jarvis can also pick its own paper trades. It is off until you press **Switch autopilot on** in Settings, Jarvis, and set `trading_autopilot.enabled` to `true` in the Jarvis relay's `config.json` (see the relay README). Jarvis then checks the market every 15 minutes in market hours, trades only with a stop and a written reason, and every reason is in the Log. It obeys the same paper-only rule, limits and risk guard. Tell Jarvis which symbols to watch; it uses DEMO:ES if you don't. Review its trades with us after a week before trusting it with anything more.
+
+## 9. Smaller decisions
 
 - **Keyboard shortcuts:** which matter most? (None are set yet except Escape to leave a maximized chart.)
 - **Sounds:** alert sounds are off by default. Turn them on in Settings if you want a sound for the 70% warning, blocks and disconnects.
 - **Light theme:** add one later, or stay dark only?
 - **HyroTrader, Breakout, or both** for crypto, and in what order?
 
-## 9. Changes from the bible we made on our own (please approve or overrule)
+## 10. Changes from the bible we made on our own (please approve or overrule)
 
 - **Screens are plain JavaScript, not React.** Same Lightweight Charts library, but no build step, so nothing extra (like Node.js) has to be installed on your PC and the app starts straight from the folder. Easy to switch later if needed.
 - **Demo prices.** Futures, forex and stocks have no free live feed until Rithmic or MT5 is connected, so the app includes clearly labelled "DEMO" symbols with practice prices that work offline. They let you try charts, scripts, backtests and paper trading now. They are not real market prices.
 - **Windows memory limit for scripts.** On Windows, scripts are limited by the 2-second timeout but not by a memory cap (that part only works on Mac/Linux). A script that tries to use huge amounts of memory could slow the PC. Low risk, on the list to improve.
 - **Approval per phase was skipped** because you asked us to build everything overnight. Every phase can still be reviewed and changed.
+
+## 11. TJR Boot Camp strategy (new)
+
+Two new scripts are in the Scripts panel: **TJR Boot Camp strategy** and **TJR Boot Camp chart view**. The rules come from the write-up in `docs/TJR_STRATEGY.md`. It runs on practice money only, like every other strategy.
+
+- **Use it on a 5 minute chart.** It builds the 15 minute, 1 hour, 4 hour and daily candles itself. In paper trading it needs a few days of candles before the daily trend is known, so it may sit out the first days.
+- **Set `point_value` for your market** before testing (ES = 50, MES = 5, most CFDs = 1). Size comes from `risk_dollars` (default $250, 1% of 25K).
+- **News days:** the app has no economic calendar yet, so type CPI, PPI, FOMC, NFP, Fed Chair and bank holiday dates into `skip_dates`. A built-in calendar would be a later update.
+- **It trades rarely, on purpose.** It needs the daily, 4 hour and 1 hour to agree, a touch of a 1 hour or 4 hour zone, then a sweep and break on the 5 minute inside 9:30 to 11:00, then a pullback, and at least 1:1 to the first target. On 120 days of practice prices it took 2 trades. Practice prices aren't real market behaviour, so judge it on real history.
+- **Choices I made where TJR doesn't say** (all can be changed in the inputs or the code): which highs count as liquidity (the latest 5 minute and 15 minute swings), entering at market after the pullback instead of a resting limit order, the last target (1 hour liquidity, or 3R if there is none), and closing everything at 15:50 New York time.
+- **Very tight stops can oversize the trade.** In a 60 day practice-price backtest it put its stop half a point past the sweep, so the $250 risk bought 10 ES contracts; the market opened a point beyond the stop and the trade lost $550, more than twice the planned risk. Decide whether to add a minimum stop distance (for example 2 points on ES) or a contract cap. Tell me the numbers and I'll add them.
+- **Not in yet:** the London 30 minute box strategy (never taught in the videos), the "4 hour against the daily" exception (rule 16), and the optional time stop (rule 35).
+
+## 12. The installed Windows app (new, 8 November 2026)
+
+The app is now a normal Windows program with an installer. Steps are in [INSTALL.md](INSTALL.md).
+
+- **Try the installer** from the PR's build (Actions > newest "Windows app" run > Artifacts). Check that it opens in its own window, that your accounts and scripts from `start_app.bat` are all there (same data folder), and that the Start menu has "Trading App".
+- **"Windows protected your PC" warning.** The installer isn't code-signed, so Windows warns the first time (More info > Run anyway). Removing that needs a code-signing certificate, which costs money (roughly $100 to $400 a year, or Microsoft's Trusted Signing service at about $10 a month). Your call whether and when.
+- **Releases.** After this is merged, pushing a version tag (for example `v0.4.0`) publishes the installer on the GitHub Releases page. Tell me when and I'll do it.
+- **Updates** are manual for now: run the newer installer. An "update available" check inside the app would be a later step.
+- `start_app.bat` still works for running from the source code.
+

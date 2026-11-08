@@ -1,12 +1,14 @@
-"""The owner's scripts, saved in the database. The examples are added on first run."""
+"""The owner's scripts, saved in the database. Example scripts are added on first run,
+and any example that is new in an update is added the next time the app starts."""
 
 import re
 import uuid
 from pathlib import Path
 
+from engine import paths
 from engine.storage.database import connect, utc_now
 
-EXAMPLES_DIR = Path(__file__).resolve().parent.parent.parent / "scripts" / "examples"
+EXAMPLES_DIR = paths.examples_dir()
 
 
 def guess_kind(code: str) -> str:
@@ -30,12 +32,15 @@ class ScriptStore:
         self.db_path = db_path
 
     def seed_examples(self) -> None:
+        """Add every example the owner hasn't got yet. Examples already there (even edited ones) are left alone."""
         with connect(self.db_path) as conn:
-            if conn.execute("SELECT COUNT(*) FROM scripts").fetchone()[0]:
-                return
+            existing = {row[0] for row in conn.execute("SELECT id FROM scripts")}
         for path in sorted(EXAMPLES_DIR.glob("*.py")):
+            script_id = f"example_{path.stem}"
+            if script_id in existing:
+                continue
             code = path.read_text(encoding="utf-8")
-            self.save(None, guess_name(code, path.stem), code, script_id=f"example_{path.stem}")
+            self.save(None, guess_name(code, path.stem), code, script_id=script_id)
 
     def all(self) -> list[dict]:
         with connect(self.db_path) as conn:
