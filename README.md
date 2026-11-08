@@ -47,10 +47,11 @@ Everything the app saves is in one folder, kept apart from the code so updates n
 | `engine/strategy/` | Backtests and the runner for live strategies and automations. |
 | `engine/risk/` | The risk guard, trailing drawdown, prop firm profiles and the kill switch. |
 | `engine/execution/` | Accounts, the paper broker, and the Rithmic, MT5 and Bybit connectors. |
-| `engine/security/` | Credential storage, login and two-factor for remote access. |
+| `engine/security/` | Credential storage, login and two-factor for remote access, Jarvis's key and limits, the owner PIN. |
 | `engine/storage/` | The SQLite database, settings, workspaces, journal and backups. |
 | `config/` | Markets, prop firm rule profiles and signup links. Edit these without touching code. |
 | `scripts/examples/` | The example scripts loaded on first start. |
+| `jarvis/` | The helper and instructions your voice assistant Jarvis uses to work the app (see NEEDS_NATHAN.md, section 8). |
 | `desktop/` | The Windows window. It starts the engine and shows the screens. |
 | `ui/` | The screens (plain JavaScript, no build step). |
 | `tests/` | Automated tests. Double-click `run_tests.bat` to run them. |

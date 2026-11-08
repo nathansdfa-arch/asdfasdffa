@@ -8,13 +8,26 @@ export async function get(path) {
   return body;
 }
 
+// The owner PIN, once typed, is kept in memory until the window closes (never saved).
+let ownerPin = null;
+
 export async function send(method, path, body) {
-  const reply = await fetch(path, {
+  const attempt = () => fetch(path, {
     method,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(ownerPin ? { "X-Owner-Pin": ownerPin } : {}) },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  const result = await reply.json().catch(() => ({}));
+  let reply = await attempt();
+  let result = await reply.json().catch(() => ({}));
+  if (reply.status === 403 && result.pin_required) {
+    // Owner-only button: ask for the PIN and try once more.
+    ownerPin = window.prompt("Owner PIN") || null;
+    if (ownerPin) {
+      reply = await attempt();
+      result = await reply.json().catch(() => ({}));
+      if (reply.status === 403 && result.pin_required) { ownerPin = null; throw new Error("Wrong owner PIN."); }
+    }
+  }
   if (!reply.ok) throw new Error(result.error || `Request failed (${reply.status})`);
   return result;
 }

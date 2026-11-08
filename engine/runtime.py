@@ -30,6 +30,7 @@ from engine.risk.killswitch import KillSwitch
 from engine.risk.profiles import ProfileStore
 from engine.scripting.host import ScriptHost
 from engine.scripting.store import ScriptStore
+from engine.security.jarvis import JarvisAccess
 from engine.storage import database
 from engine.storage.backups import Backups
 from engine.storage.documents import DrawingStore, WorkspaceStore
@@ -54,6 +55,7 @@ class Engine:
         self.drawings = DrawingStore(self.db_path)
         self.journal = Journal(self.db_path)
         self.accounts = AccountStore(self.db_path)
+        self.jarvis = JarvisAccess(self.db_path, clock)
         self.scripts = ScriptStore(self.db_path)
         self.scripts.seed_examples()
         self.profiles = ProfileStore()
